@@ -5,4 +5,19 @@
 
 ### ros packages
 
- - varname (`sudo pip3 install varname`)
+
+## to run tests
+
+From the workspace 
+
+```
+catkin_make run_tests
+```
+
+Maually, from the package folder
+
+```
+python3 /usr/bin/nosetests -v tests
+
+```
+requires to install the `python-nose` package

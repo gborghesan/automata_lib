@@ -37,8 +37,7 @@ def call_if_not_None(f):
     return []
 def call_if_not_None_always(f):
     if f is not None:
-        f()
-        return [f]
+        return f()
     return []
 
 class AbstractState:
@@ -96,8 +95,6 @@ class Transition:
         if isinstance(o_d, str):
             return [o_d] 
         if isinstance(o_d, list):
-            for x in o_d:
-                print(x + type(x))
             assert all (isinstance(x,str) for x in o_d), 'all '+ o_d_name +' in the list must be strings (State Names)' 
             return o_d
 
@@ -144,6 +141,7 @@ class FSM(AbstractAutomata):
             f_ret+=call_if_not_None_always(subfsm.cleanup)
         f_ret+=call_if_not_None(subfsm.exit)
         log("exiting state: `"+ self.current_state+"'")
+        self.current_state=None
         return f_ret
             
         
@@ -198,7 +196,7 @@ class FSM(AbstractAutomata):
             log("entering initial state: `"+ self.current_state+"'")
             current_state=self.states[self.current_state]
             if current_state.composed==True:
-                f_ret+=call_if_not_None_always(current_state.init)
+                call_if_not_None_always(current_state.init)
             f_ret+= call_if_not_None(current_state.entry)
             f_ret+=call_if_not_None(current_state.doo)
             return f_ret# will return the init state function
@@ -222,7 +220,7 @@ class FSM(AbstractAutomata):
             log("exiting state: `"+ self.current_state+"'")
             log("entering state: `"+ target_state+"'")
             if next_state.composed==True:
-                f_ret+=call_if_not_None_always(next_state.init)
+                call_if_not_None_always(next_state.init)
             f_ret+=call_if_not_None(next_state.entry)
             
             self.current_state=target_state

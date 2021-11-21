@@ -47,9 +47,9 @@ class EventConstructor(unittest.TestCase):
         
     def test_state_names_not_list_or_string(self):     
         with self.assertRaises(AssertionError):
-            t1=Transition(1,'s2')
+            Transition(1,'s2')
         with self.assertRaises(AssertionError):
-            t1=Transition('s1',State())
+            Transition('s1',State())
         
     def test_state_names_multiple_names(self):
         t=Transition(['s1','s2'],['s3','s4'])
@@ -86,23 +86,17 @@ class FSMTests(unittest.TestCase):
         fsm=FSM(states={'s1':s1,'s2':s2},
                 transitions={'e_1':Transition('s1','s2')},
                 init_state='s1')
+        self.assertEqual(l1,{'f_entry': False, 'f_doo': False, 'f_exit': False})
+        self.assertEqual(l2,{'f_entry': False, 'f_doo': False, 'f_exit': False})
         fsm.step()
         self.assertEqual(fsm.current_state,'s1')
-        self.assertTrue(l1['f_entry'])
-        self.assertTrue(l1['f_doo'])
-        self.assertFalse(l1['f_exit'])
-        self.assertFalse(l2['f_entry'])
-        self.assertFalse(l2['f_doo'])
-        self.assertFalse(l2['f_exit'])
+        self.assertEqual(l1,{'f_entry': True, 'f_doo': True, 'f_exit': False})
+        self.assertEqual(l2,{'f_entry': False, 'f_doo': False, 'f_exit': False}) 
         fsm.queque_event('e_1')
         fsm.step()
         self.assertEqual(fsm.current_state,'s2')
-        self.assertTrue(l1['f_entry'])
-        self.assertTrue(l1['f_doo'])
-        self.assertTrue(l1['f_exit'])
-        self.assertTrue(l2['f_entry'])
-        self.assertTrue(l2['f_doo'])
-        self.assertFalse(l2['f_exit'])
+        self.assertEqual(l1,{'f_entry': True, 'f_doo': True, 'f_exit': True})
+        self.assertEqual(l2,{'f_entry': True, 'f_doo': True, 'f_exit': False}) 
         
     def test_check_transitions_no_auto(self):
         automata_lib.state.automatic_execution= False   
@@ -287,22 +281,22 @@ class FSMTests(unittest.TestCase):
                              'e_sub_1':Transition('s_sub','s1')},
                 init_state='s1')
              
-        f_list=fsm.step()
+        fsm.step()
         self.assertEqual(fsm.current_state,'s1')
         self.assertIsNone(subfsm.current_state)
         
         fsm.queque_event('e_1_sub')
-        f_list=fsm.step() 
+        fsm.step() 
         self.assertEqual(fsm.current_state,'s_sub')
         self.assertEqual(subfsm.current_state,'s2')
         
         fsm.queque_event('e_2_3')
-        f_list=fsm.step()
+        fsm.step()
         self.assertEqual(fsm.current_state,'s_sub')
         self.assertEqual(subfsm.current_state,'s3')
                
         fsm.queque_event('e_sub_1')
-        f_list=fsm.step()
+        fsm.step()
         self.assertEqual(fsm.current_state,'s1')
         self.assertIsNone(subfsm.current_state)
         

@@ -31,5 +31,6 @@ fsm=FSM(states={'s1':State(),'s2':State(), 'sub':subfsm},
 fsm.step()
   
 dot=plot_fsm(fsm)
-
+# this is a Digraph, so you can do all the stuff explained here
+# https://graphviz.readthedocs.io/en/stable/api.html#graphviz.Digraph
 dot.view()

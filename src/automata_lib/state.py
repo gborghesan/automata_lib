@@ -50,23 +50,6 @@ class AbstractState:
         self.composed = False
 
 
-class AbstractAutomata(AbstractState):
-     def __init__(self, 
-                 entry: Callable=None, 
-                 doo: Callable=None, 
-                 exit: Callable=None):
-        super().__init__(entry=entry,doo=doo,exit=exit)
-        self.entry = entry
-        self.exit = exit
-        self.doo = doo   
-        # theses are for composed states
-        self.composed = True
-        def init():
-            return []
-        def cleanup():
-            return []
-        def step():
-            pass
 
 class State(AbstractState):
     '''This is a basic state. it contains only the entry, doo, and exit function'''
@@ -105,7 +88,39 @@ class Transition:
         self.origins=self.__check_state(origins,'Origins')
         self.destinations=self.__check_state(destinations,'Destinations')
         self.guard=guard
-        #self.__name = nameof(self)
+        
+class AbstractAutomata(AbstractState):
+    def __init__(self, 
+                 entry: Callable=None, 
+                 doo: Callable=None, 
+                 exit: Callable=None):
+        super().__init__(entry=entry,doo=doo,exit=exit)
+        self.entry = entry
+        self.exit = exit
+        self.doo = doo   
+        # theses are for composed states
+        self.composed = True
+        self.current_state=None
+    
+    def init(self):   
+        #we need to reset the initial state everytime we enter the state machine as a state
+        debug('Automata initialization')
+        self.current_state=None
+        return []
+    def cleanup(self):
+        return []
+    def step(self):
+        pass
+    def checkStateExists(self,state_name):
+        try:
+            self.states[state_name]
+        except:
+            raise (Exception('state name {} does not exists'.format(state_name)))
+    def queque_event(self,s):
+         self._event_queque.append(s)
+        
+        
+        
         
 class FSM(AbstractAutomata):
     def __init__(self, 
@@ -121,40 +136,24 @@ class FSM(AbstractAutomata):
          self.auto_transitions=auto_transitions
          self.init_state=init_state
          
-         self.current_state=None
+         
          self._event_queque=[]
          self._function_queque=[]
          self.composed=True
     
-    def init(self):   
-        #we need to reset the initial state everytime we enter the state machine as a state
-        debug('state machine init')
-        self.current_state=None
-        return []
-
     def cleanup(self):
         #When we leave a state machine as a state, we need to execute the exit function of the current state machine
         debug('state machine cleanup')
         f_ret=[]
-        subfsm=self.states[self.current_state]
-        if subfsm.composed==True:
-            f_ret+=call_if_not_None_always(subfsm.cleanup)
-        f_ret+=call_if_not_None(subfsm.exit)
+        current_state=self.states[self.current_state]
+        if current_state.composed==True:
+            f_ret+=call_if_not_None_always(current_state.cleanup)
+        f_ret+=call_if_not_None(current_state.exit)
         log("exiting state: `"+ self.current_state+"'")
         self.current_state=None
         return f_ret
-            
         
         self.exit()        
-    def checkStateExists(self,state_name):
-        try:
-            self.states[state_name]
-        except:
-            raise (Exception('state name {} does not exists'.format(state_name)))
-    def queque_event(self,s):
-         self._event_queque.append(s)
-    
-    
 
     
     def _check_transition(self):

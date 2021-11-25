@@ -1,3 +1,6 @@
 *.pyc
 .spyproject/*
+*.gv.pdf
+*.gv
+
 

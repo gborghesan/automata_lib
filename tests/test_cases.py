@@ -487,6 +487,62 @@ class FSMTests(unittest.TestCase):
         self.assertEqual(lsub2,{'f_entry': False, 'f_exit': False})
         self.assertEqual(lsub3,{'f_entry': False, 'f_exit': False})
         automata_lib.state.automatic_execution= True   
+    
+    def test_check_init_subfsm_nested_no_function_calls(self):
+            
+        [l1,s1]=setupState()
+        lsub3={'f_entry':False,'f_exit':False}
+        lsub2={'f_entry':False,'f_exit':False}
+        subfsm3=FSM(states={'s1':s1},
+                   entry=partial(set_to_true,flag='f_entry',l=lsub3),
+                   exit=partial(set_to_true,flag='f_exit',l=lsub3),
+                   init_state='s1')
+        subfsm2=FSM(states={'subsub':subfsm3},
+                   entry=partial(set_to_true,flag='f_entry',l=lsub2),
+                   exit=partial(set_to_true,flag='f_exit',l=lsub2),
+                   init_state='subsub' )
+        fsm=FSM(states={'sub':subfsm2},
+                init_state='sub')
+        
+        automata_lib.state.automatic_execution= False   
+        self.assertEqual(l1,{'f_entry': False, 'f_doo': False, 'f_exit': False})
+        self.assertEqual(lsub2,{'f_entry': False, 'f_exit': False})
+        self.assertEqual(lsub3,{'f_entry': False, 'f_exit': False})
+        fsm.step()
+        self.assertEqual(fsm.current_state,'sub')
+        self.assertEqual(subfsm2.current_state,'subsub')
+        self.assertEqual(subfsm3.current_state,'s1')
+        self.assertEqual(l1,{'f_entry': False, 'f_doo': False, 'f_exit': False})
+        self.assertEqual(lsub2,{'f_entry': False, 'f_exit': False})
+        self.assertEqual(lsub3,{'f_entry': False, 'f_exit': False})
+        automata_lib.state.automatic_execution= True 
+    def test_check_init_subfsm_nested_with_function_calls(self):
+            
+        [l1,s1]=setupState()
+        lsub3={'f_entry':False,'f_exit':False}
+        lsub2={'f_entry':False,'f_exit':False}
+        subfsm3=FSM(states={'s1':s1},
+                   entry=partial(set_to_true,flag='f_entry',l=lsub3),
+                   exit=partial(set_to_true,flag='f_exit',l=lsub3),
+                   init_state='s1')
+        subfsm2=FSM(states={'subsub':subfsm3},
+                   entry=partial(set_to_true,flag='f_entry',l=lsub2),
+                   exit=partial(set_to_true,flag='f_exit',l=lsub2),
+                   init_state='subsub' )
+        fsm=FSM(states={'sub':subfsm2},
+                init_state='sub')
+        
+        self.assertEqual(l1,{'f_entry': False, 'f_doo': False, 'f_exit': False})
+        self.assertEqual(lsub2,{'f_entry': False, 'f_exit': False})
+        self.assertEqual(lsub3,{'f_entry': False, 'f_exit': False})
+        fsm.step()
+        self.assertEqual(fsm.current_state,'sub')
+        self.assertEqual(subfsm2.current_state,'subsub')
+        self.assertEqual(subfsm3.current_state,'s1')
+        self.assertEqual(l1,{'f_entry': True, 'f_doo': True, 'f_exit': False})
+        self.assertEqual(lsub2,{'f_entry': True, 'f_exit': False})
+        self.assertEqual(lsub3,{'f_entry': True, 'f_exit': False})
+
 
 if __name__ == '__main__':
     import rostest

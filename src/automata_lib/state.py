@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# requires module varname 
-
-#from varname import nameof
+ 
 from typing import Callable
 from typing import Union
 
@@ -91,7 +89,7 @@ class Transition:
         o_d_name -- a string olny used in the assert"""
         o_t=type(o_d).__name__
         
-        assert isinstance(o_d, (list,str)), o_d_name +'  must be a State or a list of strings (States NAme); it is ' + o_t
+        assert isinstance(o_d, (list,str)), o_d_name +'  must be a string or a list of strings (States Names); it is ' + o_t
         if isinstance(o_d, str):
             return [o_d] 
         if isinstance(o_d, list):
@@ -115,10 +113,12 @@ class FSM(AbstractAutomata):
                  exit: Callable=None,
                  states: dict=None,
                  transitions: dict=None,
+                 auto_transitions: list=None,
                  init_state: str=None):
          super().__init__(entry=entry,exit=exit)
          self.states=states
-         self.transitions=transitions;
+         self.transitions=transitions
+         self.auto_transitions=auto_transitions
          self.init_state=init_state
          
          self.current_state=None
@@ -154,18 +154,21 @@ class FSM(AbstractAutomata):
     def queque_event(self,s):
          self._event_queque.append(s)
     
-    def __check_transition(self):
+    
+
+    
+    def _check_transition(self):
         '''
-        Consumes one event from the queque
+        Consumes one event from the queque of events; Check the transition; 
         return: 
             1 -None if no changes have to be made, otherwise return the name of the new state
             2 - None if no event need to be sent to other levels for check, otherwise the event
+            Note that if a guard function fails, the event is consumed and it the test is blocked for this step.
         '''
         if len(self._event_queque)==0:
-            debug('empty list')
+            debug('empty event list')
             return None , None
         event=self._event_queque.pop(0)
-        #event=self._event_queque[0]
         debug('checking event ' +event)
         transition=None
         try:
@@ -173,6 +176,7 @@ class FSM(AbstractAutomata):
         except:
             debug("event `"+ event + "' is not in the list")
             return None, event
+        # there is an event to consume in the queque
         if self.current_state!=transition.origins[0]:
            debug("FSM is in not in correct state; it is in`"+ self.current_state + "', expecting: `"+transition.origins[0]+"'")
            return None, event
@@ -184,7 +188,38 @@ class FSM(AbstractAutomata):
                return None, None
            debug("guard function of `"+ event + "' returned True")
         return transition.destinations[0], None
-           
+    
+    
+    def _check_auto_transition(self):
+        '''
+        Check the auto transition;
+        return: 
+            1 -None if no changes have to be made, otherwise return the name of the new state
+            2 - Event that has been used from the auto list
+        the main difference from previous functon is that if a guard fails, we should continue making the tests.
+        '''
+        
+        if self.auto_transitions == None:
+            return [None,None]
+        
+        auto_tr=None
+        next_state=None
+        for auto_ev in self.auto_transitions:  
+            debug("checking  auto transition : `"+auto_ev+"'")
+            transition=self.auto_transitions[auto_ev]
+            
+            if self.current_state!=transition.origins[0]:
+                continue
+            
+            debug("Auto transition found from state `"+ self.current_state + "'")
+            if transition.guard is not None:
+               debug("checking `"+ auto_ev + "' (auto transition) guard function")
+               if not transition.guard():
+                  debug("guard function of `"+ auto_ev + "' (auto transition) returned False - Will continue  checking other auto transition")
+                  continue
+               debug("guard function of `"+ auto_ev + "' (auto transition) returned True")
+            return transition.destinations[0], auto_ev    
+        return [next_state, auto_tr]
         
     def step(self):
          
@@ -195,15 +230,20 @@ class FSM(AbstractAutomata):
             self.current_state=self.init_state 
             log("entering initial state: `"+ self.current_state+"'")
             current_state=self.states[self.current_state]
+            f_ret+= call_if_not_None(current_state.entry)
             if current_state.composed==True:
                 call_if_not_None_always(current_state.init)
-            f_ret+= call_if_not_None(current_state.entry)
+                f_ret=f_ret+ self.states[self.current_state].step()
             f_ret+=call_if_not_None(current_state.doo)
             return f_ret# will return the init state function
         
         # transitions in normal situations; the below function consumes an event 
-        [target_state, event] = self.__check_transition()
+        [target_state, event] = self._check_transition()
         
+        if target_state is None:
+            # if there is not explicit transitions to be done, then we check the auto transitions
+            [target_state, auto_event] = self._check_auto_transition()
+            
         if target_state is not None:
             # if we get here, there will be the transition
             debug("checking transition to: `"+target_state+"'")
@@ -230,6 +270,8 @@ class FSM(AbstractAutomata):
             if event is not None:
                 self.states[self.current_state].queque_event(event)
             f_ret=f_ret+ self.states[self.current_state].step()
+        
+        
         f_ret+=call_if_not_None(self.states[self.current_state].doo)
         return f_ret
             

@@ -92,8 +92,11 @@ events=["e_start",
         "e_start",
         "e_compose",
         ]
-functions=fsm.step()
-for event in events:
-    fsm.queque_event(event)
-    functions+=fsm.step()
+ok,message=fsm.check()
+
+if ok:
+    functions=fsm.step()
+    for event in events:
+        fsm.queque_event(event)
+        functions+=fsm.step()
     

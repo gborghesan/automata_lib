@@ -274,6 +274,45 @@ class FSM(AbstractAutomata):
         
         f_ret+=call_if_not_None(self.states[self.current_state].doo)
         return f_ret
+    
+    def check(self, preamble='root: '):
+        # check the initial state
+        if self.init_state==None:
+            return False, preamble+"No initial state assigned"
+        try:
+            self.checkStateExists(self.init_state)
+        except:
+            return False, preamble+"Initial state does not exists"
+        transitions={}
+        if self.transitions!=None:
+            transitions.update(self.transitions)
+        if self.auto_transitions!=None:
+            transitions.update(self.auto_transitions)
+            
+        for t_name in transitions:
+            t=transitions[t_name]
+            if len(t.origins)!=1:
+                return False, preamble+"transition " + t_name + " must have exactly one origin"
+            if len(t.destinations)!=1:
+                return False, preamble+"transition " + t_name + " must have exactly one destination"
+            try:
+                self.checkStateExists(t.origins[0])
+            except:
+                return False, preamble+" Origin  of transition " + t_name + " does not exists; indicated " + t.origins[0]
+            try:
+                self.checkStateExists(t.destinations[0])
+            except:
+                return False, preamble+" Destination  of transition " + t_name + " does not exists; indicated " + t.destinations[0]
+         
+        for s_name in self.states:
+            s=self.states[s_name]
+            if s.composed:
+                ok, message=s.check(s_name+' :')
+                if not ok:
+                    return False, message
+        return True, ''
+        
+        
             
                     
                     

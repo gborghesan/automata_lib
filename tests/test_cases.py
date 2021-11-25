@@ -69,9 +69,102 @@ class EventConstructor(unittest.TestCase):
         self.assertTrue(t_true.guard())
         self.assertFalse(t_false.guard())        
         
+        
+class FSMVerification(unittest.TestCase):  
+    def test_check_init_state(self):
+        [l,s]=setupState()
+        fsm=FSM(states={'s':s})
+        ok,mess=fsm.check()
+        self.assertFalse(ok)
+        fsm.init_state='s_wrong'
+        ok,mess=fsm.check()
+        self.assertFalse(ok)
+        fsm.init_state='s'
+        ok,mess=fsm.check()
+        self.assertTrue(ok)
+    def test_check_transition(self):
+        [l1,s1]=setupState()
+        [l2,s2]=setupState()
+        [l3,s3]=setupState()
+        fsm=FSM(states={'s1':s1,'s2':s2,'s3':s3},
+               init_state='s1',
+               transitions={'e_1':Transition('s','s2')})
+        ok,mess=fsm.check()
+        self.assertFalse(ok)
+        
+        fsm.transitions['e_1']=Transition('s1','s')
+        ok,mess=fsm.check()
+        self.assertFalse(ok)
+        
+        fsm.transitions['e_1']=Transition(['s1','s2'],'s3')
+        ok,mess=fsm.check()
+        self.assertFalse(ok)
+        
+        fsm.transitions['e_1']=Transition('s1',['s2','s3'])
+        ok,mess=fsm.check()
+        self.assertFalse(ok)
+        
+        fsm.transitions['e_1']=Transition('s1','s2')
+        fsm.transitions['e_2']=Transition('s2','s3')
+        ok,mess=fsm.check()
+        self.assertTrue(ok)
+    def test_check_auto_transition(self):
+        [l1,s1]=setupState()
+        [l2,s2]=setupState()
+        [l3,s3]=setupState()
+        fsm=FSM(states={'s1':s1,'s2':s2,'s3':s3},
+               init_state='s1',
+               auto_transitions={'e_1':Transition('s','s2')})
+        ok,mess=fsm.check()
+        self.assertFalse(ok)
+        
+        fsm.auto_transitions['e_1']=Transition('s1','s')
+        ok,mess=fsm.check()
+        self.assertFalse(ok)
+        
+        fsm.auto_transitions['e_1']=Transition(['s1','s2'],'s3')
+        ok,mess=fsm.check()
+        self.assertFalse(ok)
+        
+        fsm.auto_transitions['e_1']=Transition('s1',['s2','s3'])
+        ok,mess=fsm.check()
+        self.assertFalse(ok)
+        
+        fsm.auto_transitions['e_1']=Transition('s1','s2')
+        fsm.auto_transitions['e_2']=Transition('s2','s3')
+        ok,mess=fsm.check()
+        self.assertTrue(ok)
+    def test_check_substate_ok(self):
+        [l1,s1]=setupState()
+        [l2,s2]=setupState()
+        [l3,s3]=setupState()
+        subfsm=FSM(states={'s2':s2,'s3':s3},
+                   transitions={'e_2_3':Transition('s2','s3')},
+                   init_state='s2')
+        fsm=FSM(states={'s1':s1,'s_sub':subfsm},
+                transitions={'e_1_sub':Transition('s1','s_sub'),
+                             'e_sub_1':Transition('s_sub','s1')},
+                init_state='s1')
+        ok,mess=fsm.check()
+        self.assertTrue(ok)
+
+    def test_check_substate_not_ok(self):
+        [l1,s1]=setupState()
+        [l2,s2]=setupState()
+        [l3,s3]=setupState()
+        subfsm=FSM(states={'s2':s2,'s3':s3},
+                   transitions={'e_2_3':Transition('s4','s3')},
+                   init_state='s2')
+        fsm=FSM(states={'s1':s1,'s_sub':subfsm},
+                transitions={'e_1_sub':Transition('s1','s_sub'),
+                             'e_sub_1':Transition('s_sub','s1')},
+                init_state='s1')
+        ok,mess=fsm.check()
+        self.assertFalse(ok)
+        
 class FSMTests(unittest.TestCase):
 
-    def test_check_functions(self):
+    def test_execution_functions(self):
         [l,s]=setupState()
         fsm=FSM(states={'s':s},
                 init_state='s')
@@ -79,6 +172,7 @@ class FSMTests(unittest.TestCase):
         self.assertTrue(l['f_entry'])
         self.assertTrue(l['f_doo'])
         self.assertFalse(l['f_exit'])
+        
 
     def test_check_transitions(self):
         [l1,s1]=setupState()
@@ -549,5 +643,6 @@ if __name__ == '__main__':
     rostest.rosrun('automata_lib', 'test_StateConstructor', StateConstructor)
     rostest.rosrun('automata_lib', 'test_EventConstructor', EventConstructor)
     rostest.rosrun('automata_lib', 'FSMTests', FSMTests)
+    rostest.rosrun('automata_lib','FSMVerification',FSMVerification)
    
     #unittest.main()        

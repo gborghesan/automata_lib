@@ -87,9 +87,12 @@ events=["e_none",
         ]
 functions=[]
 step_count=0
-for event in events:
-    print("\n-------- step {} -------".format(step_count));step_count+=1
-    if event!="e_none":
-        fsm.queque_event(event)
-    functions+=fsm.step()
+ok,message=fsm.check()
+
+if ok:
+    for event in events:
+        print("\n-------- step {} -------".format(step_count));step_count+=1
+        if event!="e_none":
+            fsm.queque_event(event)
+        functions+=fsm.step()
     

@@ -11,7 +11,8 @@ import automata_lib.fsmviz
 # table of colors: https://graphviz.org/doc/info/colors.html
 automata_lib.fsmviz.active_state_color='greenyellow'
 
-from automata_lib.state import State, FSM, Transition
+from automata_lib.state import State, Transition
+from automata_lib.fsm import FSM
 import automata_lib.state
 
 subsubfsm=FSM(states={'s1':State(),'s2':State()},

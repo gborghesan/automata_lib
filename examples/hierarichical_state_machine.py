@@ -1,23 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from automata_lib.state import State, FSM, Transition
-import automata_lib.state
+from automata_lib.state import State, Transition, config
+from automata_lib.fsm import FSM
 from functools import partial
 
 
 def print_test(text):
     print(text)
     
-
-s1=State(entry=partial(print_test,text=("ENTRY !")),
-   exit=partial(print_test,text=("EXIT !")),
-  )
-
-s1.entry()
-s1.exit()
-
-s2=State()
 
 
 fsm=FSM()
@@ -71,15 +62,17 @@ fsm.transitions={
         }
 
 fsm.init_state='first'
+
+
 count =0
 def mylog(s):
     global count
     count+=1
     print(str(count) +"\tLOG: " +s )
+    
+config['log']= mylog
+#config['debug']= lambda s: None
 
-automata_lib.state.log= mylog
-
-automata_lib.state.automatic_execution= True   
 
 functions=[]
 events=["e_start",
@@ -92,11 +85,13 @@ events=["e_start",
         "e_start",
         "e_compose",
         ]
-ok,message=fsm.check()
 
+ok,message=fsm.check()
+step_count=0
 if ok:
     functions=fsm.step()
     for event in events:
+        print("\n-------- step {} -------".format(step_count));step_count+=1
         fsm.queque_event(event)
         functions+=fsm.step()
     

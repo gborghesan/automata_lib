@@ -1,19 +1,20 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from automata_lib.state import State, FSM, Transition
-import automata_lib.state
+from automata_lib.state import State, Transition, config
+from automata_lib.fsm import FSM
 from functools import partial
 
 
 def print_test(text):
     print(text)
 
-automata_lib.state.debug_active=False
 
 s1=State(entry=partial(print_test,text=("ENTRY !")),
    exit=partial(print_test,text=("EXIT !")),
   )
+# note: also `entry=partial(print,"ENTRY !")' works
+
 
 s1.entry()
 s1.exit()
@@ -62,15 +63,17 @@ fsm.auto_transitions={
         }
 
 fsm.init_state='first'
+
+
+
 count =0
 def mylog(s):
     global count
     count+=1
     print(str(count) +"\tLOG: " +s )
+config['log']= mylog
+config['debug']= lambda s: None
 
-automata_lib.state.log= mylog
-
-automata_lib.state.automatic_execution= True   
 
 functions=[]
 events=["e_none",

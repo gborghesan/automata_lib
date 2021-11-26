@@ -6,7 +6,8 @@ Created on Fri Nov 19 09:50:45 2021
 @author: gborghesan
 """
 import unittest
-from automata_lib.state import State, FSM, Transition
+from automata_lib.state import State, Transition, config
+from automata_lib.fsm import  FSM
 import automata_lib.state
 from functools import partial
 
@@ -193,7 +194,7 @@ class FSMTests(unittest.TestCase):
         self.assertEqual(l2,{'f_entry': True, 'f_doo': True, 'f_exit': False}) 
         
     def test_check_transitions_no_auto(self):
-        automata_lib.state.automatic_execution= False   
+        config['automatic_execution']= False   
         [l1,s1]=setupState()
         [l2,s2]=setupState()
         fsm=FSM(states={'s1':s1,'s2':s2},
@@ -220,7 +221,7 @@ class FSMTests(unittest.TestCase):
         self.assertEqual(l2,{'f_entry': True, 'f_doo': True, 'f_exit': False})
        
         
-        automata_lib.state.automatic_execution= True   
+        config['automatic_execution']= True   
     
     def test_check_transitions_subfsm(self):
         [l1,s1]=setupState()
@@ -275,7 +276,7 @@ class FSMTests(unittest.TestCase):
         '''
         Automatic call of functions are disabled and done manually
         '''
-        automata_lib.state.automatic_execution= False   
+        config['automatic_execution']= False   
         [l1,s1]=setupState()
         [l2,s2]=setupState()
         [l3,s3]=setupState()
@@ -355,12 +356,12 @@ class FSMTests(unittest.TestCase):
         self.assertEqual(l3,{'f_entry': True, 'f_doo': True, 'f_exit': True})
         self.assertEqual(lsub,{'f_entry': True, 'f_exit': True})
         
-        automata_lib.state.automatic_execution= True   
+        config['automatic_execution']= True   
     def test_check_transitions_subfsm_no_function_calls(self):
         '''
         Like test_check_transitions_subfsm_no_auto, but the functions are not called (only transition check)
         '''
-        automata_lib.state.automatic_execution= False   
+        config['automatic_execution']= False   
         [l1,s1]=setupState()
         [l2,s2]=setupState()
         [l3,s3]=setupState()
@@ -393,7 +394,7 @@ class FSMTests(unittest.TestCase):
         fsm.step()
         self.assertEqual(fsm.current_state,'s1')
         self.assertIsNone(subfsm.current_state)       
-        automata_lib.state.automatic_execution= True  
+        config['automatic_execution']= True  
     
     def test_check_transitions_subfsm_nested(self):
         [l1,s1]=setupState()
@@ -512,7 +513,7 @@ class FSMTests(unittest.TestCase):
                              'e_sub_5':Transition('sub2','s5')},
                 init_state='s1')
         
-        automata_lib.state.automatic_execution= False   
+        config['automatic_execution']= False   
         fsm.step()
         self.assertEqual(fsm.current_state,'s1')
         self.assertIsNone(subfsm2.current_state)
@@ -580,7 +581,7 @@ class FSMTests(unittest.TestCase):
         self.assertEqual(l5,{'f_entry': False, 'f_doo': False, 'f_exit': False})
         self.assertEqual(lsub2,{'f_entry': False, 'f_exit': False})
         self.assertEqual(lsub3,{'f_entry': False, 'f_exit': False})
-        automata_lib.state.automatic_execution= True   
+        config['automatic_execution']= True   
     
     def test_check_init_subfsm_nested_no_function_calls(self):
             
@@ -598,7 +599,7 @@ class FSMTests(unittest.TestCase):
         fsm=FSM(states={'sub':subfsm2},
                 init_state='sub')
         
-        automata_lib.state.automatic_execution= False   
+        config['automatic_execution']= False   
         self.assertEqual(l1,{'f_entry': False, 'f_doo': False, 'f_exit': False})
         self.assertEqual(lsub2,{'f_entry': False, 'f_exit': False})
         self.assertEqual(lsub3,{'f_entry': False, 'f_exit': False})
@@ -609,7 +610,7 @@ class FSMTests(unittest.TestCase):
         self.assertEqual(l1,{'f_entry': False, 'f_doo': False, 'f_exit': False})
         self.assertEqual(lsub2,{'f_entry': False, 'f_exit': False})
         self.assertEqual(lsub3,{'f_entry': False, 'f_exit': False})
-        automata_lib.state.automatic_execution= True 
+        config['automatic_execution']= True 
     def test_check_init_subfsm_nested_with_function_calls(self):
             
         [l1,s1]=setupState()

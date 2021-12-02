@@ -22,8 +22,10 @@ subfsm=FSM(states={'s1':State(),'s2':State(),'ssub':subsubfsm},
         transitions={'e_1_2':Transition('s1','s2'),
                           'e_s_1':Transition('ssub','s1')},
          init_state='ssub')
-
-fsm=FSM(states={'s1':State(),'s2':State(), 'sub':subfsm},
+subfsm2=FSM(states={'s1':State(),'s2':State()},
+             transitions={'e_1_2':Transition('s1','s2')},
+               init_state='s1' )
+fsm=FSM(states={'s1':State(),'s2':subfsm2, 'sub':subfsm},
         transitions={
                 'e_1_2':Transition('s1','s2'),
                 'e_2_sub':Transition('s2','sub'),

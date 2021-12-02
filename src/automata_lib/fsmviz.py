@@ -8,7 +8,8 @@ import graphviz
 plot_arrow_to_init_in_sub=False
 
 active_substate_color=["gray90","gray85","gray80","gray75",
-                       "gray70","gray65","gray60","gray55"]
+                       "gray70","gray65","gray60","gray55",
+                       "gray50","gray45","gray40","gray35"]
 active_state_color='yellow'
 default_state_color='white'
 default_min_lenght='1'
@@ -98,5 +99,8 @@ def plot_fsm(fsm):
     #back to main function
     dot = graphviz.Digraph(comment='Root')
     dot.attr(compound='true')
+    dot.attr(nodesep='0.5', ranksep='0.5')
+    global level
+    level=0
     _plot_fsm(fsm, dot,name='')
     return dot

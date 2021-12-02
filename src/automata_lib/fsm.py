@@ -22,7 +22,7 @@ class FSM(AbstractAutomata):
          
          
          self._event_queque=[]
-         self._function_queque=[]
+         self._function_queque=[] # TODO check if can be removed
          self.composed=True
     
     def cleanup(self):
@@ -54,9 +54,9 @@ class FSM(AbstractAutomata):
         event=self._event_queque.pop(0)
         config['debug']('checking event ' +event)
         transition=None
-        try:
+        if event in self.transitions.keys():
             transition=self.transitions[event]
-        except:
+        else:
             config['debug']("event `"+ event + "' is not in the list")
             return None, event
         # there is an event to consume in the queque
@@ -158,6 +158,12 @@ class FSM(AbstractAutomata):
         f_ret+=call_if_not_None(self.states[self.current_state].doo)
         return f_ret
     
+    def checkStateExists(self,state_name):
+        try:
+            self.states[state_name]
+        except:
+            raise (Exception('state name {} does not exists'.format(state_name)))
+            
     def check(self, preamble='root: '):
         # check the initial state
         if self.init_state==None:

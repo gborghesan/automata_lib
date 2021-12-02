@@ -110,17 +110,12 @@ class AbstractAutomata(AbstractState):
         return []
     def step(self):
         pass
-    def checkStateExists(self,state_name):
-        try:
-            self.states[state_name]
-        except:
-            raise (Exception('state name {} does not exists'.format(state_name)))
+
     def queque_event(self,s):
          self._event_queque.append(s)
         
                  
 
-                
              
                  
             

@@ -21,13 +21,18 @@ def plot_place (dot,name,current_state):
     
     if name in current_state.keys():
         name_node=name+'('+str( current_state[name])+')'
+        color=active_state_color
     else:
         name_node=name
-    prop={'fillcolor':default_state_color,'style':'filled','shape':'circle','fixedsize':'true'}
+        color=default_state_color
+    prop={'fillcolor':color,'style':'filled','shape':'circle','fixedsize':'true'}
     dot.node(name,name_node,prop)
 
 def plot_transition (dot,name):
-    prop={'fillcolor':default_state_color,'style':'filled','shape':'square','fixedsize':'true'}
+    prop={'fillcolor':'black','fontcolor':'white','style':'filled','shape':'rect','fixedsize':'true'}
+    dot.node(name,name,prop)
+def auto_plot_transition (dot,name):
+    prop={'fillcolor':'gray','fontcolor':'white','style':'filled','shape':'rect','fixedsize':'true'}
     dot.node(name,name,prop)
 
 
@@ -37,12 +42,20 @@ def plot_pn(pn):
     dot.attr(nodesep='0.5', ranksep='0.5')
     for state in pn.states:
         plot_place(dot, state,pn.current_state)
-    for transition_name, transition in pn.transitions.items():
-        plot_transition(dot, transition_name)
-        for origin in transition.origins:
-            dot.edge(origin,transition_name,'')  
-        for dest in transition.destinations:
-            dot.edge(transition_name,dest,'')  
-    
+    if pn.transitions is not None:
+        for transition_name, transition in pn.transitions.items():
+            plot_transition(dot, transition_name)
+            for origin in transition.origins:
+                dot.edge(origin,transition_name,'')  
+            for dest in transition.destinations:
+                dot.edge(transition_name,dest,'')  
+    if pn.auto_transitions is not None:
+        for transition_name, transition in pn.auto_transitions.items():
+            auto_plot_transition(dot, transition_name)
+            for origin in transition.origins:
+                dot.edge(origin,transition_name,'')  
+            for dest in transition.destinations:
+                dot.edge(transition_name,dest,'')  
+            
     return dot
 

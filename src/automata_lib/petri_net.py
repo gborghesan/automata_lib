@@ -16,7 +16,7 @@ def _decrease_token(current_state,state_name):
         del current_state[state_name]
         
 def _increase_token(current_state,state_name):
-    if state_name is current_state.keys():
+    if state_name in current_state.keys():
         current_state[state_name]+=1;
     else:  
         current_state[state_name]=1;
@@ -84,10 +84,8 @@ class PetriNet(AbstractAutomata):
                 config['log']("Petrinet expected at least a token in place: `" + origin+"'" )
                 return False, event
             
-            states_working_dic[origin]-=1;
-            if states_working_dic[origin]==0: # if it reach zero, i delete from the current state
-                del states_working_dic[origin]
-        
+            _decrease_token(states_working_dic,origin)# if it reach zero, I delete from the current state
+      
         # if i arrive here it means that I have to transition
                 
         config['debug']("PN has sufficients tokens to make the transition" )
@@ -101,36 +99,46 @@ class PetriNet(AbstractAutomata):
         return True, event
     
     
-#    def _check_auto_transition(self):
-#        '''
-#        Check the auto transition;
-#        return: 
-#            1 -None if no changes have to be made, otherwise return the name of the new state
-#            2 - Event that has been used from the auto list
-#        the main difference from previous functon is that if a guard fails, we should continue making the tests.
-#        '''
-#        
-#        if self.auto_transitions == None:
-#            return [None,None]
-#        
-#        auto_tr=None
-#        next_state=None
-#        for auto_ev in self.auto_transitions:  
-#            config['debug']("checking  auto transition : `"+auto_ev+"'")
-#            transition=self.auto_transitions[auto_ev]
-#            
-#            if self.current_state!=transition.origins[0]:
-#                continue
-#            
-#            config['debug']("Auto transition found from state `"+ self.current_state + "'")
-#            if transition.guard is not None:
-#               config['debug']("checking `"+ auto_ev + "' (auto transition) guard function")
-#               if not transition.guard():
-#                  config['debug']("guard function of `"+ auto_ev + "' (auto transition) returned False - Will continue  checking other auto transition")
-#                  continue
-#               config['debug']("guard function of `"+ auto_ev + "' (auto transition) returned True")
-#            return transition.destinations[0], auto_ev    
-#        return [next_state, auto_tr]
+    def _check_auto_transition(self):
+        '''
+        Check the auto transition;
+        return: 
+          make_transition: - True if we need to make the transition, False otherwise
+          event_to_sub_automata- None if no event need to be sent to other levels for check, otherwise the event
+           
+          the main difference from previous functon is that if a guard fails, we should continue making the tests.
+        '''
+        
+        if self.auto_transitions == None:
+            return [False,None]
+        
+
+        for auto_ev, transition in self.auto_transitions.items():  
+            config['debug']("checking  auto transition : `"+auto_ev+"'")         
+            states_working_dic=deepcopy(self.current_state)
+            for origin in transition.origins:
+                interrupt=False
+                if not(origin in states_working_dic.keys()) or states_working_dic[origin]<0 :
+                    interrupt=True
+                    continue
+                _decrease_token(states_working_dic,origin)
+            
+            if interrupt:
+                config['debug']("check on tokens for transition {} failed".format(auto_ev))
+                continue
+            config['debug']("PN has sufficients tokens to make the auto transition" )
+            
+            
+            if transition.guard is not None:
+               config['debug']("checking `"+ auto_ev + "' guard function")
+               if not transition.guard():
+                   config['debug']("guard function of `"+ auto_ev + "' returned False")
+                   return None, None
+               config['debug']("guard function of `"+ auto_ev + "' returned True")
+            return True, auto_ev
+        
+        return False, None
+        
         
     def step(self):
          
@@ -154,12 +162,19 @@ class PetriNet(AbstractAutomata):
         
         # transitions in normal situations; the below function consumes an event 
         [make_transition, event] = self._check_transition()
-        
-    
-        
         if make_transition:
             # if we get here, there will be the transition we check if the target state exists;
             transition=self.transitions[event]
+        
+        #heck for auto transitions
+        if not make_transition:
+            [make_transition, event] = self._check_auto_transition()
+            if make_transition:
+                transition=self.auto_transitions[event]
+        
+        if make_transition:
+            # if we get here, there will be the transition we check if the target state exists;
+            
             for destination in transition.destinations:
                 config['debug']("checking transition to: `"+destination+"'")
                 self.checkStateExists(destination)
@@ -199,6 +214,9 @@ class PetriNet(AbstractAutomata):
        
         
         # executing the doo
+        if make_transition:
+            event=None #if i already had a transition, i do not want any more transitions on substates
+        
         for current_st_name, token in self.current_state.items():
             current_st=self.states[current_st_name]
             for i in range(token):

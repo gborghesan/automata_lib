@@ -2,15 +2,27 @@
 # -*- coding: utf-8 -*-
  
 from typing import Callable
+from typing import Union
 
-
-from automata_lib.state import AbstractAutomata, call_if_not_None, call_if_not_None_always,config
+from automata_lib.state import AbstractAutomata, call_if_not_None, call_if_not_None_always,config,Transition
 from copy import deepcopy     
 
-allow_sub_states=False
+allow_sub_states=False # TODO for the moment, i will not allow substates at all, 
+#because i do not know how to manage it in a general case.
+#
+
+ExternalDefString="EventsFromExternalSource"
+
+class ExternalTransition(Transition):
+    def __init__(self,
+                 destinations: Union[str,list],
+                 guard: Callable=None):
+        super().__init__(ExternalDefString,destinations,guard)
 
 
 def _decrease_token(current_state,state_name):
+    if state_name==ExternalDefString:
+        return
     current_state[state_name]-=1;
     if current_state[state_name]==0: # if it reach zero, i delete from the current state
         del current_state[state_name]
@@ -76,15 +88,22 @@ class PetriNet(AbstractAutomata):
         except:
             config['debug']("event `"+ event + "' is not in the transition list")
             return False, event
-        # in petri net there are we have to check that for each origin, at least one toke should be present
+        # in petri net there  we have to check that for each origin, at least one token should be present
         # first i make a local deep copy of the current state
         states_working_dic=deepcopy(self.current_state)
-        for origin in transition.origins:
-            if not(origin in states_working_dic.keys()) or states_working_dic[origin]<0 :
-                config['log']("Petrinet expected at least a token in place: `" + origin+"'" )
-                return False, event
-            
-            _decrease_token(states_working_dic,origin)# if it reach zero, I delete from the current state
+        
+        # manage the EXTERNAL source of token (the transition whose origin has the special keyword EXTERNAL)       
+        if transition.origins[0]==ExternalDefString:
+            if len(transition.origins)!=1:
+                config['debug']("used external with other sources, this is a problem...")# TODO check if need to raise an exception
+        else: # if it is not EXTERNAL, i do not need to check for available tokens
+            # in normal situation, yes....
+            for origin in transition.origins:
+                if not(origin in states_working_dic.keys()) or states_working_dic[origin]<0 :
+                    config['log']("Petrinet expected at least a token in place: `" + origin+"'" )
+                    return False, event
+                
+                _decrease_token(states_working_dic,origin)# if it reach zero, I delete from the current state
       
         # if i arrive here it means that I have to transition
                 
@@ -116,16 +135,21 @@ class PetriNet(AbstractAutomata):
         for auto_ev, transition in self.auto_transitions.items():  
             config['debug']("checking  auto transition : `"+auto_ev+"'")         
             states_working_dic=deepcopy(self.current_state)
-            for origin in transition.origins:
-                interrupt=False
-                if not(origin in states_working_dic.keys()) or states_working_dic[origin]<0 :
-                    interrupt=True
-                    continue
-                _decrease_token(states_working_dic,origin)
             
-            if interrupt:
-                config['debug']("check on tokens for transition {} failed".format(auto_ev))
-                continue
+            if transition.origins[0]==ExternalDefString:
+                if len(transition.origins)!=1:
+                    config['debug']("used external with other sources, this is a problem...")# TODO check if need to raise an exception
+            else: # if it is not EXTERNAL, i do not need to check for available tokens
+                for origin in transition.origins:
+                    interrupt=False
+                    if not(origin in states_working_dic.keys()) or states_working_dic[origin]<0 :
+                        interrupt=True
+                        continue
+                    _decrease_token(states_working_dic,origin)
+                
+                if interrupt:
+                    config['debug']("check on tokens for transition {} failed".format(auto_ev))
+                    continue
             config['debug']("PN has sufficients tokens to make the auto transition" )
             
             
@@ -186,6 +210,9 @@ class PetriNet(AbstractAutomata):
             
             config['debug']("state before update:{}".format(self.current_state))
             for origin in transition.origins:
+                if origin==ExternalDefString:
+                    break
+                
                 old_state=self.states[origin]
                 
                 if allow_sub_states==True and old_state.composed==True:

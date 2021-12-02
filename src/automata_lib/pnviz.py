@@ -4,7 +4,7 @@
 
 import graphviz
 
-
+from automata_lib.petri_net import ExternalDefString
 plot_arrow_to_init_in_sub=False
 
 active_substate_color=["gray90","gray85","gray80","gray75",
@@ -46,14 +46,16 @@ def plot_pn(pn):
         for transition_name, transition in pn.transitions.items():
             plot_transition(dot, transition_name)
             for origin in transition.origins:
-                dot.edge(origin,transition_name,'')  
+                if origin!=ExternalDefString:
+                    dot.edge(origin,transition_name,'')  
             for dest in transition.destinations:
                 dot.edge(transition_name,dest,'')  
     if pn.auto_transitions is not None:
         for transition_name, transition in pn.auto_transitions.items():
             auto_plot_transition(dot, transition_name)
             for origin in transition.origins:
-                dot.edge(origin,transition_name,'')  
+                if origin!=ExternalDefString:
+                    dot.edge(origin,transition_name,'')  
             for dest in transition.destinations:
                 dot.edge(transition_name,dest,'')  
             
